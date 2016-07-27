@@ -34,8 +34,8 @@ public class ClipboardListener implements ClipboardManager.OnPrimaryClipChangedL
     @Override
     public void onPrimaryClipChanged() {
         ClipData clipData = clipBoard.getPrimaryClip();
-        ClipData.Item item = clipData.getItemAt(0);
-        text = item.getText().toString();
+        text = clipData.getItemAt(0).coerceToText(context).toString();
+      //  text = item.getText().toString();
         Toast.makeText(context,text,Toast.LENGTH_SHORT).show();
         MyAsyncTask myAsyncTask = new MyAsyncTask();
         myAsyncTask.execute();
@@ -58,7 +58,7 @@ public class ClipboardListener implements ClipboardManager.OnPrimaryClipChangedL
         @Override
         protected void onPostExecute(Object o) {
             Toast.makeText(context,translation,Toast.LENGTH_SHORT).show();
-            final Dialog dialog = new Dialog(context);
+            /*final Dialog dialog = new Dialog(context);
             dialog.setContentView(R.layout.dialog);
             dialog.setTitle("ClipBoardTranslator");
             tvOriginal = (TextView) dialog.findViewById(R.id.textView2);
@@ -74,7 +74,7 @@ public class ClipboardListener implements ClipboardManager.OnPrimaryClipChangedL
                     dialog.dismiss();
                 }
             });
-            dialog.show();
+            dialog.show();*/
         }
     }
 }
