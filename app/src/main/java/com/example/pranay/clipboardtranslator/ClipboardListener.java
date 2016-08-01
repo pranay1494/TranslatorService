@@ -4,9 +4,14 @@ import android.app.Dialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.graphics.PixelFormat;
 import android.os.AsyncTask;
+import android.view.Gravity;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -25,6 +30,13 @@ public class ClipboardListener implements ClipboardManager.OnPrimaryClipChangedL
     private TextView tvOriginal;
     private TextView tvTranslated;
     private TextView tvHeader;
+    private WindowManager windowManager;
+    WindowManager.LayoutParams params;
+    private ImageView chatHead;
+    private long deltaForlongClickUpTime;
+    private long deltaForlongClickDownTime;
+    private boolean isLongClicked = false;
+    private ImageView removeView;
 
     public ClipboardListener(Clipboard clipboard, ClipboardManager clipBoard) {
         this.context = clipboard;
@@ -58,7 +70,11 @@ public class ClipboardListener implements ClipboardManager.OnPrimaryClipChangedL
         @Override
         protected void onPostExecute(Object o) {
             Toast.makeText(context,translation,Toast.LENGTH_SHORT).show();
-            /*final Dialog dialog = new Dialog(context);
+
+            makeDialog();
+
+/*
+            final Dialog dialog = new Dialog(context);
             dialog.setContentView(R.layout.dialog);
             dialog.setTitle("ClipBoardTranslator");
             tvOriginal = (TextView) dialog.findViewById(R.id.textView2);
@@ -76,5 +92,80 @@ public class ClipboardListener implements ClipboardManager.OnPrimaryClipChangedL
             });
             dialog.show();*/
         }
+    }
+
+    private void makeDialog() {
+
+        windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
+        makeRemoveIcon();
+        params= new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                PixelFormat.TRANSLUCENT);
+
+        params.gravity = Gravity.TOP | Gravity.LEFT;
+        params.x = 0;
+        params.y = 100;
+        chatHead = new ImageView(context);
+        chatHead.setImageResource(R.drawable.chathead);
+        chatHead.setLayoutParams(new android.view.ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        chatHead.setMaxHeight(130);
+        chatHead.setMaxWidth(130);
+        chatHead.setAdjustViewBounds(true);
+
+        chatHead.setOnTouchListener(new View.OnTouchListener() {
+            private int initialX;
+            private int initialY;
+            private float initialTouchX;
+            private float initialTouchY;
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                int action = motionEvent.getAction();
+
+                switch (action){
+                    case MotionEvent.ACTION_DOWN:
+                        initialX = params.x;
+                        initialY = params.y;
+                        initialTouchX = motionEvent.getRawX();
+                        initialTouchY = motionEvent.getRawY();
+
+                       deltaForlongClickDownTime = System.currentTimeMillis();
+                        break;
+                    case MotionEvent.ACTION_UP:
+                        deltaForlongClickUpTime = System.currentTimeMillis();
+                        if(deltaForlongClickUpTime-deltaForlongClickDownTime>2000){
+                            isLongClicked = true;
+                        }
+                        break;
+                    case MotionEvent.ACTION_MOVE:
+                        params.x = initialX
+                                + (int) (motionEvent.getRawX() - initialTouchX);
+                        params.y = initialY
+                                + (int) (motionEvent.getRawY() - initialTouchY);
+                        windowManager.updateViewLayout(chatHead, params);
+                    default:
+                }
+                return false;
+            }
+        });
+        windowManager.addView(chatHead, params);
+    }
+
+    private void makeRemoveIcon() {
+        removeView = new ImageView(context);
+        params= new WindowManager.LayoutParams(
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.WRAP_CONTENT,
+                WindowManager.LayoutParams.TYPE_PHONE,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                PixelFormat.TRANSLUCENT);
+
+        params.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+        removeView.setImageResource(R.drawable.arrow);
+//        removeView.setVisibility(View.GONE);
+        windowManager.addView(removeView, params);
+
     }
 }
