@@ -32,6 +32,7 @@ public class ClipboardListener implements ClipboardManager.OnPrimaryClipChangedL
     private TextView tvHeader;
     private WindowManager windowManager;
     WindowManager.LayoutParams params;
+    WindowManager.LayoutParams paramsForRView;
     private ImageView chatHead;
     private long deltaForlongClickUpTime;
     private long deltaForlongClickDownTime;
@@ -138,13 +139,32 @@ public class ClipboardListener implements ClipboardManager.OnPrimaryClipChangedL
                         if(deltaForlongClickUpTime-deltaForlongClickDownTime>2000){
                             isLongClicked = true;
                         }
+                        int rViewX = (int) (removeView.getX()+removeView.getWidth());
+                        int cHeadX = (int) (chatHead.getX()+chatHead.getWidth());
+                        int diffX = Math.abs(rViewX-cHeadX);
+
+                        int rViewY = (int) (removeView.getY()+removeView.getHeight());
+                        int cheadY = (int) (chatHead.getY()+chatHead.getHeight());
+                        int diffY = Math.abs(rViewY-cheadY);
+                        if(isLongClicked&&(diffX<300||diffY<300)){
+                            chatHead.setVisibility(View.GONE);
+                        }
+                        else{
+                            //todo open dialog
+                        }
+                        removeView.setVisibility(View.GONE);
                         break;
                     case MotionEvent.ACTION_MOVE:
+                        removeView.setVisibility(View.VISIBLE);
                         params.x = initialX
                                 + (int) (motionEvent.getRawX() - initialTouchX);
                         params.y = initialY
                                 + (int) (motionEvent.getRawY() - initialTouchY);
                         windowManager.updateViewLayout(chatHead, params);
+                        if(isLongClicked&&(removeView.getX()==params.x&&removeView.getY()==params.y)){
+                            chatHead.setVisibility(View.GONE);
+                            removeView.setVisibility(View.GONE);
+                        }
                     default:
                 }
                 return false;
@@ -155,17 +175,20 @@ public class ClipboardListener implements ClipboardManager.OnPrimaryClipChangedL
 
     private void makeRemoveIcon() {
         removeView = new ImageView(context);
-        params= new WindowManager.LayoutParams(
+        paramsForRView= new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_PHONE,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
                 PixelFormat.TRANSLUCENT);
 
-        params.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
-        removeView.setImageResource(R.drawable.arrow);
-//        removeView.setVisibility(View.GONE);
-        windowManager.addView(removeView, params);
-
+        paramsForRView.gravity = Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL;
+        removeView.setImageResource(R.drawable.close);
+        removeView.setVisibility(View.GONE);
+        removeView.setLayoutParams(new android.view.ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+        removeView.setMaxHeight(130);
+        removeView.setMaxWidth(130);
+        removeView.setAdjustViewBounds(true);
+        windowManager.addView(removeView, paramsForRView);
     }
 }
