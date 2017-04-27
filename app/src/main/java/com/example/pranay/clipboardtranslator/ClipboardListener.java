@@ -1,11 +1,18 @@
 package com.example.pranay.clipboardtranslator;
 
 import android.app.Dialog;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.PixelFormat;
+import android.media.RingtoneManager;
 import android.os.AsyncTask;
+import android.os.Build;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
@@ -38,6 +45,8 @@ public class ClipboardListener implements ClipboardManager.OnPrimaryClipChangedL
     private long deltaForlongClickDownTime;
     private boolean isLongClicked = false;
     private ImageView removeView;
+    Notification.Builder notification ;
+    private static final int UID = 4321;
 
     public ClipboardListener(Clipboard clipboard, ClipboardManager clipBoard) {
         this.context = clipboard;
@@ -71,7 +80,9 @@ public class ClipboardListener implements ClipboardManager.OnPrimaryClipChangedL
         @Override
         protected void onPostExecute(Object o) {
             Toast.makeText(context,translation,Toast.LENGTH_SHORT).show();
-
+            notification = new Notification.Builder(context);
+            notification.setAutoCancel(true);
+            makeNotification();
             makeDialog();
 
 /*
@@ -94,6 +105,33 @@ public class ClipboardListener implements ClipboardManager.OnPrimaryClipChangedL
             dialog.show();*/
         }
     }
+
+    private void makeNotification() {
+        Intent i = new Intent(context, MainActivity.class);
+        PendingIntent pendingIntent = PendingIntent.getActivity(context,0,i,PendingIntent.FLAG_UPDATE_CURRENT);
+        notification.setSmallIcon(R.drawable.arrow);
+        notification.setTicker("This is Ticker");
+        notification.setContentTitle("Title");
+        notification.setWhen(System.currentTimeMillis());
+        notification.setContentText("this is body");
+        notification.setSound(RingtoneManager.getActualDefaultRingtoneUri(context, RingtoneManager.TYPE_NOTIFICATION));
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+//            notification.addAction(R.mipmap.ic_launcher,"Show Activity",pendingIntent);
+//        }
+        notification.setOngoing(true);
+
+        notification.setContentIntent(pendingIntent);
+        NotificationManager notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        Notification notification1 = null;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+            notification1 = new Notification.InboxStyle(notification)
+                    .addLine("First message")
+                    .build();
+        }
+        notificationManager.notify(UID,notification1);
+
+    }
+
 
     private void makeDialog() {
 
@@ -139,15 +177,21 @@ public class ClipboardListener implements ClipboardManager.OnPrimaryClipChangedL
                         if(deltaForlongClickUpTime-deltaForlongClickDownTime>2000){
                             isLongClicked = true;
                         }
-                        int rViewX = (int) (removeView.getX()+removeView.getWidth());
-                        int cHeadX = (int) (chatHead.getX()+chatHead.getWidth());
+                        int rViewX = (int) (paramsForRView.x+removeView.getWidth());
+                        int cHeadX = (int) (params.x+chatHead.getWidth());
                         int diffX = Math.abs(rViewX-cHeadX);
 
-                        int rViewY = (int) (removeView.getY()+removeView.getHeight());
-                        int cheadY = (int) (chatHead.getY()+chatHead.getHeight());
+                        int rViewY = (int) (paramsForRView.y+removeView.getHeight());
+                        int cheadY = (int) (params.y+chatHead.getHeight());
                         int diffY = Math.abs(rViewY-cheadY);
+                        Log.d("clipboard","rViewY"+String.valueOf(rViewY));
+                        Log.d("clipboard","cHeadY"+String.valueOf(cheadY));
+                        Log.d("clipboard","Y difference"+String.valueOf(diffY));
+//                        Log.d("clipboard","rViewY"+String.valueOf(rViewY));
+//                        Log.d("clipboard","cheadY"+String.valueOf(cheadY));
+//                        Log.d("clipboard","Y difference"+String.valueOf(diffY));
                         if(isLongClicked&&(diffX<300||diffY<300)){
-                            chatHead.setVisibility(View.GONE);
+//                            chatHead.setVisibility(View.GONE);
                         }
                         else{
                             //todo open dialog
